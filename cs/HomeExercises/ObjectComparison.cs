@@ -1,111 +1,114 @@
 ﻿using FluentAssertions;
-
 using NUnit.Framework;
 
 namespace HomeExercises
 {
-    using FluentAssertions.Equivalency;
+	[TestFixture]
+	public class ObjectComparison
+	{
+		[Test]
+		[Description("Проверка текущего царя")]
+		[Category("ToRefactor")]
+		public void CheckCurrentTsar()
+		{
+			var actualTsar = TsarRegistry.GetCurrentTsar();
 
-    [TestFixture]
-    public class ObjectComparison
-    {
-        [Test]
-        [Description("Проверка текущего царя")]
-        [Category("ToRefactor")]
-        public void CheckCurrentTsar()
-        {
-            var actualTsar = TsarRegistry.GetCurrentTsar();
+			var expectedTsar = new Person(
+				"Ivan IV The Terrible",
+				54,
+				170,
+				70,
+				new Person("Vasili III of Russia", 28, 170, 60, null));
 
-            var expectedTsar = new Person(
-                "Ivan IV The Terrible",
-                54,
-                170,
-                70,
-                new Person("Vasili III of Russia", 28, 170, 60, null));
+			actualTsar.Should().BeEquivalentTo(expectedTsar, (options) =>
+			{
+				options.Excluding(t => t.Id);
+				options.Excluding(t => t.Parent);
+				return options;
+			});
+			actualTsar.Parent.Should().BeEquivalentTo(expectedTsar.Parent, (options) =>
+			{
+				options.Excluding(t => t.Id);
+				return options;
+			});
+			// Сделал, как в изначальном тесте, добавил сравнение parent.Weight; 
+			// Однако не исключение Parent у Parent работает только здесь, потому что они оба null, но не думаю, что
+			// это правильно.
+		}
 
-            actualTsar.Should().BeEquivalentTo(expectedTsar, this.ExcludeProperties);
-            actualTsar.Parent.Should().BeEquivalentTo(expectedTsar.Parent, this.ExcludeProperties);
-        }
+		[Test]
+		[Description("Альтернативное решение. Какие у него недостатки?")]
+		public void CheckCurrentTsar_WithCustomEquality()
+		{
+			/* По сути это решение ни чем не отличается от изначального в CheckCurrentTsar.
+			 * Главный его недостаток - не масштабируемость. При добавлении новых полей и свойств их придется
+			 * прописывать вручную в метод сравнения.
+			 * Преимущество решения через Fluent Assertions в том что при помощи рефлексии
+			 * происходит сравнение графов объектов, т.е при расширении нам нужно будет лишь указать, какие
+			 * поля или методы мы не хотим сравнивать, и, возможно, немного изменить структуру сравнения
+			 */
+			var actualTsar = TsarRegistry.GetCurrentTsar();
+			var expectedTsar = new Person(
+				"Ivan IV The Terrible",
+				54,
+				170,
+				70,
+				new Person("Vasili III of Russia", 28, 170, 60, null));
 
-        private EquivalencyAssertionOptions<Person> ExcludeProperties(EquivalencyAssertionOptions<Person> options)
-        {
-            options.Excluding(t => t.Parent);
-            options.Excluding(t => t.Id);
-            return options;
-        }
+			// Какие недостатки у такого подхода? 
+			/*
+			 * Не считая того, что я уже написал, можно было реализовать это сравнение в самом классе Person.
+			 * Недостаток - может произойти переполнение стека. Fluent Assertion по стандарту поднимается только до 10 уровней глубины.
+			 */
+			Assert.True(AreEqual(actualTsar, expectedTsar));
+		}
 
-        [Test]
-        [Description("Альтернативное решение. Какие у него недостатки?")]
-        public void CheckCurrentTsar_WithCustomEquality()
-        {
-            /* По сути это решение ни чем не отличается от изначального в CheckCurrentTsar.
-             * Главный его недостаток - не масштабируемость. При добавлении новых полей и свойств их придется
-             * прописывать вручную в метод сравнения.
-             * Преимущество решения через Fluent Assertions в том что при помощи рефлексии
-             * происходит сравнение графов объектов, т.е при расширении нам нужно будет лишь указать, какие
-             * поля или методы мы не хотим сравнивать, и, возможно, немного изменить структуру сравнения
-             */
-            var actualTsar = TsarRegistry.GetCurrentTsar();
-            var expectedTsar = new Person(
-                "Ivan IV The Terrible",
-                54,
-                170,
-                70,
-                new Person("Vasili III of Russia", 28, 170, 60, null));
+		private bool AreEqual(Person actual, Person expected)
+		{
+			if (actual == expected) return true;
+			if (actual == null || expected == null) return false;
+			return actual.Name == expected.Name && actual.Age == expected.Age && actual.Height == expected.Height
+			       && actual.Weight == expected.Weight && AreEqual(actual.Parent, expected.Parent);
+		}
+	}
 
-            // Какие недостатки у такого подхода? 
-            /*
-             * Не считая того, что я уже написал, можно было реализовать это сравнение в самом классе Person.
-             */
-            Assert.True(AreEqual(actualTsar, expectedTsar));
-        }
+	public class TsarRegistry
+	{
+		public static Person GetCurrentTsar()
+		{
+			return new Person(
+				"Ivan IV The Terrible",
+				54,
+				170,
+				70,
+				new Person("Vasili III of Russia", 28, 170, 60, null));
+		}
+	}
 
-        private bool AreEqual(Person actual, Person expected)
-        {
-            if (actual == expected) return true;
-            if (actual == null || expected == null) return false;
-            return actual.Name == expected.Name && actual.Age == expected.Age && actual.Height == expected.Height
-                   && actual.Weight == expected.Weight && AreEqual(actual.Parent, expected.Parent);
-        }
-    }
+	public class Person
+	{
+		public static int IdCounter = 0;
 
-    public class TsarRegistry
-    {
-        public static Person GetCurrentTsar()
-        {
-            return new Person(
-                "Ivan IV The Terrible",
-                54,
-                170,
-                70,
-                new Person("Vasili III of Russia", 28, 170, 60, null));
-        }
-    }
+		public int Age;
 
-    public class Person
-    {
-        public static int IdCounter = 0;
+		public int Height;
 
-        public int Age;
+		public int Weight;
 
-        public int Height;
+		public string Name;
 
-        public int Weight;
+		public Person Parent;
 
-        public string Name;
+		public int Id;
 
-        public Person Parent;
-
-        public int Id;
-
-        public Person(string name, int age, int height, int weight, Person parent)
-        {
-            Id = IdCounter++;
-            Name = name;
-            Age = age;
-            Height = height;
-            Weight = weight;
-            Parent = parent;
-        }
-    }
+		public Person(string name, int age, int height, int weight, Person parent)
+		{
+			Id = IdCounter++;
+			Name = name;
+			Age = age;
+			Height = height;
+			Weight = weight;
+			Parent = parent;
+		}
+	}
 }
