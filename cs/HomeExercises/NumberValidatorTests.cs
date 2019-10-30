@@ -9,27 +9,19 @@ namespace HomeExercises
 	[TestFixture]
 	public class NumberValidatorTests
 	{
-		[TestCase("String.Empty", TestName = "Empty string")]
-		[TestCase("null", TestName = "null argument")]
+		[TestCase("", TestName = "Empty string")]
+		[TestCase(null, TestName = "null argument")]
 		public void Should_NotBeValid_When_EmptyOrNull(string arg)
 		{
 			var number = new NumberValidator(4, 2, true);
 
 			number.IsValidNumber(arg).Should().BeFalse();
 		}
-
-		public static IEnumerable ValidNumberNanTestCases
-		{
-			get
-			{
-				yield return new TestCaseData("a.sd");
-				yield return new TestCaseData("-a.sd");
-				yield return new TestCaseData("12,as");
-				yield return new TestCaseData(" \t\r\n");
-			}
-		}
-
-		[Test, TestCaseSource(nameof(ValidNumberNanTestCases))]
+		
+		[TestCase("a.sd", TestName = "word string")]
+		[TestCase("-a.sdf", TestName = "word string starts with -")]
+		[TestCase(" \t\r\n", TestName = "special symbols")]
+		[TestCase("12,as", TestName = "halfway number, halway string")]
 		public void ShouldNot_BeValid_When_NAN(string arg)
 		{
 			var number = new NumberValidator(4, 2, true);
@@ -107,24 +99,18 @@ namespace HomeExercises
 		[Test]
 		public void Should_ThrowException_IfPrecisionInConstructorIsNegative()
 		{
-			var flag = true;
-			Action action = () => new NumberValidator(-1, 2, flag);
-			action.Should().Throw<Exception>("of realization").WithMessage("precision must be a positive number");
-			flag = false;
+			Action action = () => new NumberValidator(-1, 2, true);
 			action.Should().Throw<Exception>("of realization").WithMessage("precision must be a positive number");
 		}
 
 		[Test]
 		public void Should_NotThrowExceptions_WithCorrectParameters()
 		{
-			var flag = true;
-			Action action = () => new NumberValidator(1, 0, flag);
-			action.Should().NotThrow("we gave correcct parameters");
-			flag = false;
+			Action action = () => new NumberValidator(1, 0, true);
 			action.Should().NotThrow("we gave correcct parameters");
 		}
 
-		public static IEnumerable ValidNumberScaleTestCases
+		private static IEnumerable ValidNumberScaleTestCases
 		{
 			get
 			{
@@ -137,7 +123,7 @@ namespace HomeExercises
 				yield return new TestCaseData(biggerScale).SetName("bigger scale");
 			}
 		}
-
+	
 		[Test, TestCaseSource(nameof(ValidNumberScaleTestCases))]
 		public void Should_ThrowArgumentException_When_ScaleIsIncorrect(Action action)
 		{

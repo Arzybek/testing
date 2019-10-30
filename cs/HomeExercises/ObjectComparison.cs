@@ -19,21 +19,9 @@ namespace HomeExercises
 				170,
 				70,
 				new Person("Vasili III of Russia", 28, 170, 60, null));
-
-			actualTsar.Should().BeEquivalentTo(expectedTsar, (options) =>
-			{
-				options.Excluding(t => t.Id);
-				options.Excluding(t => t.Parent);
-				return options;
-			});
-			actualTsar.Parent.Should().BeEquivalentTo(expectedTsar.Parent, (options) =>
-			{
-				options.Excluding(t => t.Id);
-				return options;
-			});
-			// Сделал, как в изначальном тесте, добавил сравнение parent.Weight; 
-			// Однако не исключение Parent у Parent работает только здесь, потому что они оба null, но не думаю, что
-			// это правильно.
+			
+			actualTsar.Should().BeEquivalentTo(expectedTsar, options =>
+				options.Excluding(ctx => ctx.SelectedMemberPath.EndsWith("Id")));
 		}
 
 		[Test]
