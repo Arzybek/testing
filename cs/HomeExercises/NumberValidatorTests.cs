@@ -109,24 +109,14 @@ namespace HomeExercises
 			Action action = () => new NumberValidator(1, 0, true);
 			action.Should().NotThrow("we gave correcct parameters");
 		}
-
-		private static IEnumerable ValidNumberScaleTestCases
+		
+		[TestCase(-1, TestName = "negative scale")]
+		[TestCase(3, TestName = "equal scale")]
+		[TestCase(4, TestName = "bigger scale")]
+		public void Should_ThrowArgumentException_When_ScaleIsIncorrect(int scale)
 		{
-			get
-			{
-				Action negativeScale = () => new NumberValidator(3, -1, true);
-				Action incorrectScale = () => new NumberValidator(3, 3, true);
-				Action biggerScale = () => new NumberValidator(3, 4, true);
-
-				yield return new TestCaseData(negativeScale).SetName("negative scale");
-				yield return new TestCaseData(incorrectScale).SetName("incorrect scale");
-				yield return new TestCaseData(biggerScale).SetName("bigger scale");
-			}
-		}
-	
-		[Test, TestCaseSource(nameof(ValidNumberScaleTestCases))]
-		public void Should_ThrowArgumentException_When_ScaleIsIncorrect(Action action)
-		{
+			Action action = () => new NumberValidator(3, scale, true);
+			
 			action.Should().Throw<ArgumentException>().WithMessage(
 				"precision must be a non-negative number less or equal than precision");
 		}

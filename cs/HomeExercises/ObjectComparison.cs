@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Text.RegularExpressions;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace HomeExercises
@@ -21,7 +22,7 @@ namespace HomeExercises
 				new Person("Vasili III of Russia", 28, 170, 60, null));
 			
 			actualTsar.Should().BeEquivalentTo(expectedTsar, options =>
-				options.Excluding(ctx => ctx.SelectedMemberPath.EndsWith("Id")));
+				options.Excluding(ctx => Regex.IsMatch(ctx.SelectedMemberPath, @"^(Parent\.)*Id$")));
 		}
 
 		[Test]
